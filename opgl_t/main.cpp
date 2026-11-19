@@ -77,6 +77,9 @@ GLuint sphereVBO;
 GLuint circleVAO;
 GLuint circleVBO;
 
+GLuint pyramidVAO;
+GLuint pyramidVBO;
+
 std::vector<float> cubeVertices;
 GLsizei cubeVertexCount = 0;
 
@@ -92,32 +95,81 @@ GLsizei sphereVertexCount = 0;
 std::vector<float> circleVertices;
 GLsizei circleVertexCount = 0;
 
+std::vector<float> pyramidVertices;
+GLsizei pyramidVertexCount = 0;
+
 #pragma endregion
 #pragma region 각종 변수들
 
-// 카메라
-glm::vec3 cameraPos(0.0f, 0.0f, 7.0f);
-glm::vec3 cameraDirection(-0.0f, -0.0f, -7.0f);
+// 카메라 위치
+glm::vec3 cameraPos(1.0f, 4.0f, 7.0f);
+glm::vec3 cameraDirection(-1.0f, -4.0f, -7.0f);
 int viewmode{};
 
-// 초반 상태
+// 조명 위치
+glm::vec3 lightPos(2.0f, 1.0f, -2.0f);
 
+// 카메라 상태
+int cameraRotationDirection = 0;
+int cameraOrbitDirection = 0;
+
+// 조명 상태
+int lightRotationDirection = 0;
+int lightOrbitDirection = 0;
+
+bool lightEnabled = true;
+
+glm::vec3 lightColor(1.0f);
+
+// 초반 상태
+bool shapeChange = false;
+float lightRotationAngle = 0.0f;
+float lightOrbitAngle = 0.0f;
+
+float leftTopX = -0.3f;
+float rightTopX = 0.3f;
+float lowerBodyHeight = 0.2f;
+float middleBodyAngle = 0.0f;
+float barrelAngle = 0.0f;
+float flagAngle = 0.0f;
+glm::vec3 lowerBodyColor(0.6f, 0.4f, 0.2f);
+glm::vec3 middleBodyColor(0.6f, 0.1f, 0.6f);
+glm::vec3 topBodyColor(0.9f, 0.2f, 0.2f);
+glm::vec3 barrelColor(0.3f, 0.7f, 0.2f);
+glm::vec3 flagpoleColor(0.1f, 0.1f, 0.9f);
 
 // 상태 변수
 bool usePerspective = false;
 bool wireframeMode = false;
 
+float tankPositionX = 0.0f;
+float tankPositionZ = 0.0f;
+float topSwapProgress = 0.0f;
+float leftTopStartX = 0.0f;
+float rightTopStartX = 0.0f;
+
 // 애니메이션 상태
+bool lowerBodyAnimating = false;
+bool lowerBodyGrowing = true;
+bool middleBodyRotating = false;
+bool topSwapAnimating = false;
+bool barrelRotating = false;
+bool barrelIncrease = false;
+bool flagRotating = false;
+bool flagIncrease = false;
+bool lightRotating = false;
+bool cameraRotating = false;
 
-// 카메라 자전
-int cameraRotationDirection = 0;
-
-// 카메라 공전
-int cameraOrbitDirection = 0;
 
 // 입력처리
 bool previousYPressed = false;
 bool previousRPressed = false;
+bool previousNPressed = false;
+bool previousBPressed = false;
+bool previousVPressed = false;
+bool previousMPressed = false;
+bool previousCPressed = false;
+
 
 // 도형 종류 선택
 const int SHAPE_CUBE = 0;
@@ -125,9 +177,10 @@ const int SHAPE_CONE = 1;
 const int SHAPE_CYLINDER = 2;
 const int SHAPE_SPHERE = 3;
 const int SHAPE_CIRCLE = 4;
+const int SHAPE_PYRAMID = 5;
 
 // 선택의 종류
-int selectedObject = 4;
+int selectedObject = 5;
 
 // 은면제거
 bool depthTestEnabled = true;
@@ -136,28 +189,41 @@ bool depthTestEnabled = true;
 #pragma region 도형 만드는 함수들
 
 // 정점 추가해주는 함수
-void AddVertex( std::vector<float>& vertices,float x,float y,float z)
+void AddVertex(std::vector<float>& vertices, float x, float y, float z)
 {
     vertices.push_back(x);
     vertices.push_back(y);
     vertices.push_back(z);
 }
 
-// 면 만드는 함수
-void AddQuad(std::vector<float>& vertices, const glm::vec3& p0, const glm::vec3& p1,const glm::vec3& p2,const glm::vec3& p3)
-{
-    // 첫 번째 삼각형
-    AddVertex(vertices, p0.x, p0.y, p0.z);
-    AddVertex(vertices, p1.x, p1.y, p1.z);
-    AddVertex(vertices, p2.x, p2.y, p2.z);
+// 삼각형 정점들 + 법선벡터 저장
+void AddTriNV(std::vector<float>& vertices, const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2) {
 
-    // 두 번째 삼각형
+    glm::vec3 edge1 = p1 - p0;
+    glm::vec3 edge2 = p2 - p0;
+
+    glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
+
     AddVertex(vertices, p0.x, p0.y, p0.z);
+    AddVertex(vertices, normal.x, normal.y, normal.z);
+
+    AddVertex(vertices, p1.x, p1.y, p1.z);
+    AddVertex(vertices, normal.x, normal.y, normal.z);
+
     AddVertex(vertices, p2.x, p2.y, p2.z);
-    AddVertex(vertices, p3.x, p3.y, p3.z);
+    AddVertex(vertices, normal.x, normal.y, normal.z);
 }
 
-// 육면체 만드는 함수
+// 사각형 면 정점 + 법선 벡터 저장하는 함수
+void AddQuad(std::vector<float>& vertices, const glm::vec3& p0, const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& p3)
+{
+    // 첫 번째 삼각형
+    AddTriNV(vertices, p0, p1, p2);
+    // 두 번째 삼각형
+    AddTriNV(vertices, p0, p2, p3);
+}
+
+// 육면체 만드는 함수 + 법선벡터 포함
 void MakeCubeVertices()
 {
     cubeVertices.clear();
@@ -193,7 +259,7 @@ void MakeCubeVertices()
     AddQuad(cubeVertices, p0, p1, p5, p4);
 
     cubeVertexCount =
-        static_cast<GLsizei>(cubeVertices.size() / 3);
+        static_cast<GLsizei>(cubeVertices.size() / 6);
 }
 
 // 원뿔 만드는 함수
@@ -270,7 +336,7 @@ void MakeCylinderVertices()
         static_cast<GLsizei>(cylinderVertices.size() / 3);
 }
 
-// 구 만드는 함수
+// 구 만드는 함수 + 법선 벡터
 void MakeSphereVertices()
 {
     sphereVertices.clear();
@@ -325,37 +391,61 @@ void MakeSphereVertices()
                 sphereVertices,
                 p00.x, p00.y, p00.z
             );
+            {
+                glm::vec3 normal = glm::normalize(p00);
+                AddVertex(sphereVertices, normal.x, normal.y, normal.z);
+            }
 
             AddVertex(
                 sphereVertices,
                 p10.x, p10.y, p10.z
             );
+            {
+                glm::vec3 normal = glm::normalize(p10);
+                AddVertex(sphereVertices, normal.x, normal.y, normal.z);
+            }
 
             AddVertex(
                 sphereVertices,
                 p11.x, p11.y, p11.z
             );
+            {
+                glm::vec3 normal = glm::normalize(p11);
+                AddVertex(sphereVertices, normal.x, normal.y, normal.z);
+            }
 
             // 두 번째 삼각형
             AddVertex(
                 sphereVertices,
                 p00.x, p00.y, p00.z
             );
+            {
+                glm::vec3 normal = glm::normalize(p00);
+                AddVertex(sphereVertices, normal.x, normal.y, normal.z);
+            }
 
             AddVertex(
                 sphereVertices,
                 p11.x, p11.y, p11.z
             );
+            {
+                glm::vec3 normal = glm::normalize(p11);
+                AddVertex(sphereVertices, normal.x, normal.y, normal.z);
+            }
 
             AddVertex(
                 sphereVertices,
                 p01.x, p01.y, p01.z
             );
+            {
+                glm::vec3 normal = glm::normalize(p01);
+                AddVertex(sphereVertices, normal.x, normal.y, normal.z);
+            }
         }
     }
 
     sphereVertexCount =
-        static_cast<GLsizei>(sphereVertices.size() / 3);
+        static_cast<GLsizei>(sphereVertices.size() / 6);
 }
 
 // 원 만드는 함수
@@ -386,6 +476,40 @@ void MakeCircleVertices() {
 
     circleVertexCount =
         static_cast<GLsizei>(circleVertices.size() / 3);
+}
+
+// 사각뿔 만드는 함수 + 법선벡터 포함
+void MakePyramidVertices() {
+    pyramidVertices.clear();
+
+    const float h = 0.5f;
+    float topY = h;
+
+    glm::vec3 top(0.0f, topY, 0.0f);
+
+    glm::vec3 p0(-h, -h, -h);
+    glm::vec3 p1(h, -h, -h);
+
+    glm::vec3 p2(-h, -h, h);
+    glm::vec3 p3(h, -h, h);
+
+    // 앞면: +Z
+    AddTriNV(pyramidVertices, top, p2, p3);
+
+    // 뒷면: -Z p1 -> p0
+    AddTriNV(pyramidVertices, top, p1, p0);
+
+    // 오른쪽 면: +X p3 -> p1
+    AddTriNV(pyramidVertices, top, p3, p1);
+
+    // 왼쪽 면: -X p0 -> p2
+    AddTriNV(pyramidVertices, top, p0, p2);
+
+    // 밑면: -Y
+    AddQuad(pyramidVertices, p2, p0, p1, p3);
+
+    pyramidVertexCount =
+        static_cast<GLsizei>(pyramidVertices.size() / 6);
 }
 
 # pragma endregion
@@ -442,7 +566,7 @@ GLuint MakeShaderProgram()
 
 void InitBuffer()
 {
-    #pragma region 좌표축
+#pragma region 좌표축
     glGenVertexArrays(1, &axisVAO);
     glGenBuffers(1, &axisVBO);
 
@@ -466,9 +590,9 @@ void InitBuffer()
     );
 
     glEnableVertexAttribArray(0);
-    #pragma endregion
+#pragma endregion
 
-    #pragma region 육면체
+#pragma region 육면체
     MakeCubeVertices();
 
     glGenVertexArrays(1, &cubeVAO);
@@ -489,14 +613,26 @@ void InitBuffer()
         3,
         GL_FLOAT,
         GL_FALSE,
-        3 * sizeof(float),
+        6 * sizeof(float),
         (void*)0
     );
 
     glEnableVertexAttribArray(0);
-    #pragma endregion
 
-    #pragma region 원뿔
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        6 * sizeof(float),
+        (void*)(3 * sizeof(float))
+    );
+
+    glEnableVertexAttribArray(1);
+
+#pragma endregion
+
+#pragma region 원뿔
     MakeConeVertices();
 
     glGenVertexArrays(1, &coneVAO);
@@ -522,9 +658,9 @@ void InitBuffer()
     );
 
     glEnableVertexAttribArray(0);
-    #pragma endregion
+#pragma endregion
 
-    #pragma region 실린더
+#pragma region 실린더
     MakeCylinderVertices();
 
     glGenVertexArrays(1, &cylinderVAO);
@@ -550,9 +686,9 @@ void InitBuffer()
     );
 
     glEnableVertexAttribArray(0);
-    #pragma endregion
+#pragma endregion
 
-    #pragma region 구
+#pragma region 구
     MakeSphereVertices();
 
     glGenVertexArrays(1, &sphereVAO);
@@ -573,14 +709,26 @@ void InitBuffer()
         3,
         GL_FLOAT,
         GL_FALSE,
-        3 * sizeof(float),
+        6 * sizeof(float),
         (void*)0
     );
 
     glEnableVertexAttribArray(0);
-    #pragma endregion
 
-    #pragma region 원
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        6 * sizeof(float),
+        (void*)(3 * sizeof(float))
+    );
+
+    glEnableVertexAttribArray(1);
+
+#pragma endregion
+
+#pragma region 원
     MakeCircleVertices();
 
     glGenVertexArrays(1, &circleVAO);
@@ -606,9 +754,9 @@ void InitBuffer()
     );
 
     glEnableVertexAttribArray(0);
-    #pragma endregion
+#pragma endregion
 
-    #pragma region 면
+#pragma region 면
     glGenVertexArrays(1, &faceVAO);
     glGenBuffers(1, &faceVBO);
 
@@ -657,7 +805,48 @@ void InitBuffer()
 
     glEnableVertexAttribArray(0);
 
-    #pragma endregion
+#pragma endregion
+
+#pragma region 사각뿔
+
+    MakePyramidVertices();
+
+    glGenVertexArrays(1, &pyramidVAO);
+    glGenBuffers(1, &pyramidVBO);
+
+    glBindVertexArray(pyramidVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, pyramidVBO);
+
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        pyramidVertices.size() * sizeof(float),
+        pyramidVertices.data(),
+        GL_STATIC_DRAW
+    );
+
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        6 * sizeof(float),
+        (void*)0
+    );
+
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        6 * sizeof(float),
+        (void*)(3 * sizeof(float))
+    );
+
+    glEnableVertexAttribArray(1);
+
+#pragma endregion
 
 }
 void DrawObject(int objectMode, const glm::mat4& model, GLint modelLocation)
@@ -690,6 +879,12 @@ void DrawObject(int objectMode, const glm::mat4& model, GLint modelLocation)
         selectedVAO = circleVAO;
         selectedVertexCount = circleVertexCount;
     }
+    else if (objectMode == SHAPE_PYRAMID)
+    {
+        selectedVAO = pyramidVAO;
+        selectedVertexCount = pyramidVertexCount;
+    }
+
 
     glUniformMatrix4fv(
         modelLocation,
