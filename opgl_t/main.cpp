@@ -1238,83 +1238,284 @@ void DrawScene(int viewmode)
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
-    // 차량 아래 몸체
+    // SUV
     {
-        glUniform1i(lightingLocation, GL_TRUE);
+        // 차량 아래 몸체
+        {
+            glUniform1i(lightingLocation, GL_TRUE);
 
-		glm::mat4 model(1.0f);
+            glm::mat4 model(1.0f);
 
-        model = glm::translate(
-            model,
-            glm::vec3(0.0f, 0.5f, 0.0f)
-        );
+            model = glm::translate(
+                model,
+                glm::vec3(0.0f, 0.5f, 0.0f)
+            );
 
-        model = glm::scale(
-            model,
-            glm::vec3(0.5f, 0.2f, 1.0f)
-        );
+            model = glm::scale(
+                model,
+                glm::vec3(0.5f, 0.2f, 1.0f)
+            );
 
-		glUniform4f(colorLocation, 0.6f, 0.4f, 0.2f, 1.0f);
-		DrawObject(SHAPE_CUBE, model, modelLocation);
+            glUniform4f(colorLocation, 0.6f, 0.4f, 0.2f, 1.0f);
+            DrawObject(SHAPE_CUBE, model, modelLocation);
+        }
+
+        // 차량 위 몸체
+        {
+            glm::mat4 model(1.0f);
+
+            model = glm::translate(
+                model,
+                glm::vec3(0.0f, 0.5f + 0.1f + 0.1f, -(0.5f - 0.3f) / 2.0f)
+            );
+
+            model = glm::scale(
+                model,
+                glm::vec3(0.5f, 0.2f, 0.6f + (0.5f - 0.3f))
+            );
+
+            glUniform4f(colorLocation, 0.6f, 0.4f, 0.2f, 1.0f);
+            DrawObject(SHAPE_CUBE, model, modelLocation);
+        }
+
+        // 창문
+        {
+            // 앞 유리
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(0.0f, 0.5f + 0.1f + 0.1f, 0.3f + 0.005f / 2.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.4f, 0.14f, 0.005f)
+                );
+
+                glUniform4f(colorLocation, 0.05f, 0.05f, 0.05f, 1.0f);
+                DrawObject(SHAPE_CUBE, model, modelLocation);
+            }
+            // 뒤 유리
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(0.0f, 0.5f + 0.1f + 0.1f, -0.5f - 0.005f / 2.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.4f, 0.14f, 0.005f)
+                );
+
+                glUniform4f(colorLocation, 0.05f, 0.05f, 0.05f, 1.0f);
+                DrawObject(SHAPE_CUBE, model, modelLocation);
+            }
+            // 왼쪽 앞 유리
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(-0.25f - 0.005f / 2.0f, 0.5f + 0.1f + 0.1f, 0.3f - 0.05f - 0.3f / 2.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.005f, 0.14f, 0.3f)
+                );
+
+                glUniform4f(colorLocation, 0.05f, 0.05f, 0.05f, 1.0f);
+                DrawObject(SHAPE_CUBE, model, modelLocation);
+            }
+            // 왼쪽 뒤 유리
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(-0.25f - 0.005f / 2.0f, 0.5f + 0.1f + 0.1f, -0.5f + 0.05f + 0.3f / 2.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.005f, 0.14f, 0.3f)
+                );
+
+                glUniform4f(colorLocation, 0.05f, 0.05f, 0.05f, 1.0f);
+                DrawObject(SHAPE_CUBE, model, modelLocation);
+            }
+            // 오른쪽 앞 유리
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(0.25f + 0.005f / 2.0f, 0.5f + 0.1f + 0.1f, 0.3f - 0.05f - 0.3f / 2.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.005f, 0.14f, 0.3f)
+                );
+
+                glUniform4f(colorLocation, 0.05f, 0.05f, 0.05f, 1.0f);
+                DrawObject(SHAPE_CUBE, model, modelLocation);
+            }
+            // 오른쪽 뒤 유리
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(0.25f + 0.005f / 2.0f, 0.5f + 0.1f + 0.1f, -0.5f + 0.05f + 0.3f / 2.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.005f, 0.14f, 0.3f)
+                );
+
+                glUniform4f(colorLocation, 0.05f, 0.05f, 0.05f, 1.0f);
+                DrawObject(SHAPE_CUBE, model, modelLocation);
+            }
+        }
+
+        {}
+
+        // 바퀴들
+        {
+            // 왼쪽 앞 바퀴
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(-0.25f - 0.06f, 0.5f - 0.1f, 0.5f - 0.18f)
+                );
+
+                model = glm::rotate(
+                    model,
+                    glm::radians(90.0f),
+                    glm::vec3(0.0f, 0.0f, 1.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.5f, 0.2f, 0.5f)
+                );
+
+                glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
+                DrawObject(SHAPE_CYLINDER, model, modelLocation);
+            }
+
+            // 오른쪽 앞 바퀴
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(0.25f + 0.06f, 0.5f - 0.1f, 0.5f - 0.18f)
+                );
+
+                model = glm::rotate(
+                    model,
+                    glm::radians(90.0f),
+                    glm::vec3(0.0f, 0.0f, 1.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.5f, 0.2f, 0.5f)
+                );
+
+                glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
+                DrawObject(SHAPE_CYLINDER, model, modelLocation);
+            }
+
+            // 왼쪽 뒤 바퀴
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(-0.25f - 0.06f, 0.5f - 0.1f, -0.5f + 0.18f)
+                );
+
+                model = glm::rotate(
+                    model,
+                    glm::radians(90.0f),
+                    glm::vec3(0.0f, 0.0f, 1.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.5f, 0.2f, 0.5f)
+                );
+
+                glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
+                DrawObject(SHAPE_CYLINDER, model, modelLocation);
+            }
+
+            // 오른쪽 뒤 바퀴
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(0.25f + 0.06f, 0.5f - 0.1f, -0.5f + 0.18f)
+                );
+
+                model = glm::rotate(
+                    model,
+                    glm::radians(90.0f),
+                    glm::vec3(0.0f, 0.0f, 1.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.5f, 0.2f, 0.5f)
+                );
+
+                glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
+                DrawObject(SHAPE_CYLINDER, model, modelLocation);
+            }
+        }
     }
 
-    // 차량 위 몸체
+    {}
+
+    // 승용차
     {
-        glm::mat4 model(1.0f);
-
-        model = glm::translate(
-            model,
-            glm::vec3(0.0f, 0.5f + 0.1f + 0.1f, 0.0f)
-        );
-
-        model = glm::scale(
-            model,
-            glm::vec3(0.5f, 0.2f, 0.6f)
-        );
-
-        glUniform4f(colorLocation, 0.6f, 0.4f, 0.2f, 1.0f);
-        DrawObject(SHAPE_CUBE, model, modelLocation);
-    }
-
-    // 바퀴들
-    {
-        // 왼쪽 앞 바퀴
+        {}
+        // 차량 아래 몸체
         {
             glm::mat4 model(1.0f);
 
             model = glm::translate(
                 model,
-                glm::vec3(-0.25f - 0.06f, 0.5f - 0.1f, 0.5f - 0.18f)
-            );
-
-            model = glm::rotate(
-                model,
-                glm::radians(90.0f),
-                glm::vec3(0.0f, 0.0f, 1.0f)
+                glm::vec3(1.0f, 0.5f, 0.0f)
             );
 
             model = glm::scale(
                 model,
-                glm::vec3(0.5f, 0.2f, 0.5f)
+                glm::vec3(0.5f, 0.2f, 1.0f)
             );
 
-            glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
-            DrawObject(SHAPE_CYLINDER, model, modelLocation);
+            glUniform4f(colorLocation, 0.2f, 0.4f, 0.7f, 1.0f);
+            DrawObject(SHAPE_CUBE, model, modelLocation);
         }
 
-        // 오른쪽 앞 바퀴
+        // 차량 위 몸체
         {
             glm::mat4 model(1.0f);
 
             model = glm::translate(
                 model,
-                glm::vec3(0.25f + 0.06f, 0.5f - 0.1f, 0.5f - 0.18f)
-            );
-
-            model = glm::rotate(
-                model,
-                glm::radians(90.0f),
-                glm::vec3(0.0f, 0.0f, 1.0f)
+                glm::vec3(1.0f, 0.5f + 0.1f + 0.1f, 0.0f)
             );
 
             model = glm::scale(
@@ -1322,56 +1523,213 @@ void DrawScene(int viewmode)
                 glm::vec3(0.5f, 0.2f, 0.5f)
             );
 
-            glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
-            DrawObject(SHAPE_CYLINDER, model, modelLocation);
+            glUniform4f(colorLocation, 0.2f, 0.4f, 0.7f, 1.0f);
+            DrawObject(SHAPE_CUBE, model, modelLocation);
         }
 
-        // 왼쪽 뒤 바퀴
+        // 창문
         {
-            glm::mat4 model(1.0f);
+            // 앞 유리
+            {
+                glm::mat4 model(1.0f);
 
-            model = glm::translate(
-                model,
-                glm::vec3(-0.25f - 0.06f, 0.5f - 0.1f, -0.5f + 0.18f)
-            );
+                model = glm::translate(
+                    model,
+                    glm::vec3(1.0f, 0.5f + 0.1f + 0.1f, 0.5f / 2.0f + 0.005f / 2.0f)
+                );
 
-            model = glm::rotate(
-                model,
-                glm::radians(90.0f),
-                glm::vec3(0.0f, 0.0f, 1.0f)
-            );
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.4f, 0.14f, 0.005f)
+                );
 
-            model = glm::scale(
-                model,
-                glm::vec3(0.5f, 0.2f, 0.5f)
-            );
+                glUniform4f(colorLocation, 0.05f, 0.05f, 0.05f, 1.0f);
+                DrawObject(SHAPE_CUBE, model, modelLocation);
+            }
+            // 뒤 유리
+            {
+                glm::mat4 model(1.0f);
 
-            glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
-            DrawObject(SHAPE_CYLINDER, model, modelLocation);
+                model = glm::translate(
+                    model,
+                    glm::vec3(1.0f, 0.5f + 0.1f + 0.1f, -0.5f / 2.0f - 0.005f / 2.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.4f, 0.14f, 0.005f)
+                );
+
+                glUniform4f(colorLocation, 0.05f, 0.05f, 0.05f, 1.0f);
+                DrawObject(SHAPE_CUBE, model, modelLocation);
+            }
+            // 왼쪽 앞 유리
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(1.0f - 0.5f / 2.0f - 0.005f / 2.0f, 0.5f + 0.1f + 0.1f, 0.5f / 2.0f - 0.03f - 0.19f / 2.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.005f, 0.14f, 0.19f)
+                );
+
+                glUniform4f(colorLocation, 0.05f, 0.05f, 0.05f, 1.0f);
+                DrawObject(SHAPE_CUBE, model, modelLocation);
+            }
+            // 왼쪽 뒤 유리
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(1.0f - 0.5f / 2.0f - 0.005f / 2.0f, 0.5f + 0.1f + 0.1f, -0.5f / 2.0f + 0.03f + 0.19f / 2.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.005f, 0.14f, 0.19f)
+                );
+
+                glUniform4f(colorLocation, 0.05f, 0.05f, 0.05f, 1.0f);
+                DrawObject(SHAPE_CUBE, model, modelLocation);
+            }
+            // 오른쪽 앞 유리
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(1.0f + 0.5f / 2.0f + 0.005f / 2.0f, 0.5f + 0.1f + 0.1f, 0.5f / 2.0f - 0.03f - 0.19f / 2.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.005f, 0.14f, 0.19f)
+                );
+
+                glUniform4f(colorLocation, 0.05f, 0.05f, 0.05f, 1.0f);
+                DrawObject(SHAPE_CUBE, model, modelLocation);
+            }
+            // 오른쪽 뒤 유리
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(1.0f + 0.5f / 2.0f + 0.005f / 2.0f, 0.5f + 0.1f + 0.1f, -0.5f / 2.0f + 0.03f + 0.19f / 2.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.005f, 0.14f, 0.19f)
+                );
+
+                glUniform4f(colorLocation, 0.05f, 0.05f, 0.05f, 1.0f);
+                DrawObject(SHAPE_CUBE, model, modelLocation);
+            }
         }
 
-        // 오른쪽 뒤 바퀴
+        {}
+
+        // 바퀴들
         {
-            glm::mat4 model(1.0f);
+            {}
+            // 왼쪽 앞 바퀴
+            {
+                glm::mat4 model(1.0f);
 
-            model = glm::translate(
-                model,
-                glm::vec3(0.25f + 0.06f, 0.5f - 0.1f, -0.5f + 0.18f)
-            );
+                model = glm::translate(
+                    model,
+                    glm::vec3(1.0f - 0.25f - 0.06f, 0.5f - 0.1f, 0.5f - 0.18f)
+                );
 
-            model = glm::rotate(
-                model,
-                glm::radians(90.0f),
-                glm::vec3(0.0f, 0.0f, 1.0f)
-            );
+                model = glm::rotate(
+                    model,
+                    glm::radians(90.0f),
+                    glm::vec3(0.0f, 0.0f, 1.0f)
+                );
 
-            model = glm::scale(
-                model,
-                glm::vec3(0.5f, 0.2f, 0.5f)
-            );
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.5f, 0.2f, 0.5f)
+                );
 
-            glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
-            DrawObject(SHAPE_CYLINDER, model, modelLocation);
+                glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
+                DrawObject(SHAPE_CYLINDER, model, modelLocation);
+            }
+            // 오른쪽 앞 바퀴
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(1.0f + 0.25f + 0.06f, 0.5f - 0.1f, 0.5f - 0.18f)
+                );
+
+                model = glm::rotate(
+                    model,
+                    glm::radians(90.0f),
+                    glm::vec3(0.0f, 0.0f, 1.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.5f, 0.2f, 0.5f)
+                );
+
+                glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
+                DrawObject(SHAPE_CYLINDER, model, modelLocation);
+            }
+            // 왼쪽 뒤 바퀴
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(1.0f - 0.25f - 0.06f, 0.5f - 0.1f, -0.5f + 0.18f)
+                );
+
+                model = glm::rotate(
+                    model,
+                    glm::radians(90.0f),
+                    glm::vec3(0.0f, 0.0f, 1.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.5f, 0.2f, 0.5f)
+                );
+
+                glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
+                DrawObject(SHAPE_CYLINDER, model, modelLocation);
+            }
+            // 오른쪽 뒤 바퀴
+            {
+                glm::mat4 model(1.0f);
+
+                model = glm::translate(
+                    model,
+                    glm::vec3(1.0f + 0.25f + 0.06f, 0.5f - 0.1f, -0.5f + 0.18f)
+                );
+
+                model = glm::rotate(
+                    model,
+                    glm::radians(90.0f),
+                    glm::vec3(0.0f, 0.0f, 1.0f)
+                );
+
+                model = glm::scale(
+                    model,
+                    glm::vec3(0.5f, 0.2f, 0.5f)
+                );
+
+                glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
+                DrawObject(SHAPE_CYLINDER, model, modelLocation);
+            }
         }
     }
 }
