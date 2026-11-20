@@ -104,6 +104,7 @@ GLsizei pyramidVertexCount = 0;
 // 카메라 위치
 glm::vec3 cameraPos(1.0f, 4.0f, 7.0f);
 glm::vec3 cameraDirection(-1.0f, -4.0f, -7.0f);
+glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
 int viewmode{};
 
 // 조명 위치
@@ -126,40 +127,11 @@ bool shapeChange = false;
 float lightRotationAngle = 0.0f;
 float lightOrbitAngle = 0.0f;
 
-float leftTopX = -0.3f;
-float rightTopX = 0.3f;
-float lowerBodyHeight = 0.2f;
-float middleBodyAngle = 0.0f;
-float barrelAngle = 0.0f;
-float flagAngle = 0.0f;
-glm::vec3 lowerBodyColor(0.6f, 0.4f, 0.2f);
-glm::vec3 middleBodyColor(0.6f, 0.1f, 0.6f);
-glm::vec3 topBodyColor(0.9f, 0.2f, 0.2f);
-glm::vec3 barrelColor(0.3f, 0.7f, 0.2f);
-glm::vec3 flagpoleColor(0.1f, 0.1f, 0.9f);
-
 // 상태 변수
 bool usePerspective = false;
 bool wireframeMode = false;
 
-float tankPositionX = 0.0f;
-float tankPositionZ = 0.0f;
-float topSwapProgress = 0.0f;
-float leftTopStartX = 0.0f;
-float rightTopStartX = 0.0f;
-
 // 애니메이션 상태
-bool lowerBodyAnimating = false;
-bool lowerBodyGrowing = true;
-bool middleBodyRotating = false;
-bool topSwapAnimating = false;
-bool barrelRotating = false;
-bool barrelIncrease = false;
-bool flagRotating = false;
-bool flagIncrease = false;
-bool lightRotating = false;
-bool cameraRotating = false;
-
 
 // 입력처리
 bool previousYPressed = false;
@@ -296,7 +268,7 @@ void MakeConeVertices()
         static_cast<GLsizei>(coneVertices.size() / 3);
 }
 
-// 실린더 만드는 함수
+// 실린더 만드는 함수 + 위치와 법선 벡터
 void MakeCylinderVertices()
 {
     cylinderVertices.clear();
@@ -309,31 +281,43 @@ void MakeCylinderVertices()
 
     for (int slice = 0; slice < sliceCount; ++slice)
     {
-        float theta1 =
-            2.0f * PI * slice / sliceCount;
-
-        float theta2 =
-            2.0f * PI * (slice + 1) / sliceCount;
+        float theta1 = 2.0f * PI * slice / sliceCount;
+        float theta2 = 2.0f * PI * (slice + 1) / sliceCount;
 
         float x1 = radius * cos(theta1);
         float z1 = radius * sin(theta1);
-
         float x2 = radius * cos(theta2);
         float z2 = radius * sin(theta2);
 
-        // 첫 번째 삼각형
-        AddVertex(cylinderVertices, x1, topY, z1);
-        AddVertex(cylinderVertices, x1, bottomY, z1);
-        AddVertex(cylinderVertices, x2, bottomY, z2);
+        glm::vec3 top1(x1, topY, z1);
+        glm::vec3 bottom1(x1, bottomY, z1);
+        glm::vec3 top2(x2, topY, z2);
+        glm::vec3 bottom2(x2, bottomY, z2);
+        glm::vec3 normal1 = glm::normalize(glm::vec3(x1, 0.0f, z1));
+        glm::vec3 normal2 = glm::normalize(glm::vec3(x2, 0.0f, z2));
 
-        // 두 번째 삼각형
-        AddVertex(cylinderVertices, x1, topY, z1);
-        AddVertex(cylinderVertices, x2, bottomY, z2);
-        AddVertex(cylinderVertices, x2, topY, z2);
+        // 옆면은 각 정점에서 바깥쪽을 향하는 법선을 사용한다.
+        AddVertex(cylinderVertices, top1.x, top1.y, top1.z);
+        AddVertex(cylinderVertices, normal1.x, normal1.y, normal1.z);
+        AddVertex(cylinderVertices, bottom1.x, bottom1.y, bottom1.z);
+        AddVertex(cylinderVertices, normal1.x, normal1.y, normal1.z);
+        AddVertex(cylinderVertices, bottom2.x, bottom2.y, bottom2.z);
+        AddVertex(cylinderVertices, normal2.x, normal2.y, normal2.z);
+
+        AddVertex(cylinderVertices, top1.x, top1.y, top1.z);
+        AddVertex(cylinderVertices, normal1.x, normal1.y, normal1.z);
+        AddVertex(cylinderVertices, bottom2.x, bottom2.y, bottom2.z);
+        AddVertex(cylinderVertices, normal2.x, normal2.y, normal2.z);
+        AddVertex(cylinderVertices, top2.x, top2.y, top2.z);
+        AddVertex(cylinderVertices, normal2.x, normal2.y, normal2.z);
+
+        // 양쪽 면은 정점 순서로 각각 +Y, -Y 면 법선을 만든다.
+        AddTriNV(cylinderVertices, glm::vec3(0.0f, topY, 0.0f), top2, top1);
+        AddTriNV(cylinderVertices, glm::vec3(0.0f, bottomY, 0.0f), bottom1, bottom2);
     }
 
     cylinderVertexCount =
-        static_cast<GLsizei>(cylinderVertices.size() / 3);
+        static_cast<GLsizei>(cylinderVertices.size() / 6);
 }
 
 // 구 만드는 함수 + 법선 벡터
@@ -681,11 +665,22 @@ void InitBuffer()
         3,
         GL_FLOAT,
         GL_FALSE,
-        3 * sizeof(float),
+        6 * sizeof(float),
         (void*)0
     );
 
     glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        6 * sizeof(float),
+        (void*)(3 * sizeof(float))
+    );
+
+    glEnableVertexAttribArray(1);
 #pragma endregion
 
 #pragma region 구
@@ -924,6 +919,7 @@ void ResetScene()
     // 카메라
     cameraPos = glm::vec3(3.0f, 2.0f, 4.0f);
     cameraDirection = glm::vec3(-3.0f, -2.0f, -4.0f);
+    cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
     // 카메라 자전
     cameraRotationDirection = 0;
@@ -951,6 +947,32 @@ void InputProcess(GLFWwindow* window)
         ResetScene();
     }
 
+    // 카메라 시점 선택
+    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+    {
+        cameraPos = glm::vec3(0.0f, 5.0f, 0.0f);
+        cameraDirection = glm::vec3(0.0f, 0.5f - 5.0f, 0.0f);
+        cameraUp = glm::vec3(0.0f, 0.0f, -1.0f);
+        cameraRotationDirection = 0;
+        cameraOrbitDirection = 0;
+    }
+    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+    {
+        cameraPos = glm::vec3(0.0f, 0.5f, 3.0f);
+        cameraDirection = glm::vec3(0.0f, 0.0f, -3.0f);
+        cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+        cameraRotationDirection = 0;
+        cameraOrbitDirection = 0;
+    }
+    if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
+    {
+        cameraPos = glm::vec3(3.0f, 0.5f, 0.0f);
+        cameraDirection = glm::vec3(-3.0f, 0.0f, 0.0f);
+        cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+        cameraRotationDirection = 0;
+        cameraOrbitDirection = 0;
+    }
+
     // 투영, 출력모드 선택
     if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
         if (shiftPressed) {
@@ -960,7 +982,7 @@ void InputProcess(GLFWwindow* window)
             usePerspective = true;
         }
     }
-    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
         if (shiftPressed) {
             wireframeMode = true;
         }
@@ -1043,10 +1065,16 @@ void InputProcess(GLFWwindow* window)
     }
     previousRPressed = currentRPressed;
 
+    bool currentMPressed = glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS;
+    if (currentMPressed && !previousMPressed)
+    {
+        lightEnabled = !lightEnabled;
+    }
+    previousMPressed = currentMPressed;
+
 }
 void UpdateScene()
 {
-
     // 카메라 시선 y축 자전 행렬
     if (cameraRotationDirection != 0)
     {
@@ -1082,6 +1110,7 @@ void UpdateScene()
             viewmode = 0;
         }
     }
+
     // 출력 모드 선택
     {
         if (wireframeMode == true) {
@@ -1100,11 +1129,28 @@ void DrawScene(int viewmode)
     
     glUseProgram(shaderProgramID);
 
+    // 조명 사용 여부
+    int lightingLocation = glGetUniformLocation(shaderProgramID, "useLighting");
+    glUniform1i(lightingLocation, GL_FALSE);
+
+    int lightPosLocation = glGetUniformLocation(shaderProgramID, "lightPos");
+    glUniform3f(lightPosLocation, lightPos.x, lightPos.y, lightPos.z);
+    int lightColorLocation = glGetUniformLocation(shaderProgramID, "lightColor");
+    glUniform3f(lightColorLocation, lightColor.x, lightColor.y, lightColor.z);
+
+    // 광원 사용 여부
+    int lightEnabledLocation = glGetUniformLocation(shaderProgramID, "lightEnabled");
+    glUniform1i(lightEnabledLocation, lightEnabled);
+
+	// 광원 위치
+    int viewPosLocation = glGetUniformLocation(shaderProgramID, "viewPos");
+    glUniform3f(viewPosLocation, cameraPos.x, cameraPos.y, cameraPos.z);
+
     // 뷰행렬
     glm::mat4 view;
     if (viewmode == 0 || viewmode == 1) {
         glm::vec3 cameraTarget = cameraPos + cameraDirection;
-        glm::vec3 cameraUp(0.0f, 1.0f, 0.0f);
+
 
         view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
     }
@@ -1164,6 +1210,170 @@ void DrawScene(int viewmode)
         glDrawArrays(GL_POINTS, 3, 1);
     }
 
+    // 바닥
+    {
+        glm::mat4 model = glm::mat4(1.0f);
+
+        model = glm::rotate(
+            model,
+            glm::radians(90.0f),
+            glm::vec3(1.0f, 0.0f, 0.0f)
+        );
+
+        model = glm::scale(
+            model,
+            glm::vec3(4.0f, 4.0f, 1.0f)
+        );
+
+        glUniformMatrix4fv(
+            modelLocation,
+            1,
+            GL_FALSE,
+            glm::value_ptr(model)
+        );
+
+        glUniform4f(colorLocation, 0.5f, 0.5f, 0.5f, 1.0f);
+
+        glBindVertexArray(faceVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+
+    // 차량 아래 몸체
+    {
+        glUniform1i(lightingLocation, GL_TRUE);
+
+		glm::mat4 model(1.0f);
+
+        model = glm::translate(
+            model,
+            glm::vec3(0.0f, 0.5f, 0.0f)
+        );
+
+        model = glm::scale(
+            model,
+            glm::vec3(0.5f, 0.2f, 1.0f)
+        );
+
+		glUniform4f(colorLocation, 0.6f, 0.4f, 0.2f, 1.0f);
+		DrawObject(SHAPE_CUBE, model, modelLocation);
+    }
+
+    // 차량 위 몸체
+    {
+        glm::mat4 model(1.0f);
+
+        model = glm::translate(
+            model,
+            glm::vec3(0.0f, 0.5f + 0.1f + 0.1f, 0.0f)
+        );
+
+        model = glm::scale(
+            model,
+            glm::vec3(0.5f, 0.2f, 0.6f)
+        );
+
+        glUniform4f(colorLocation, 0.6f, 0.4f, 0.2f, 1.0f);
+        DrawObject(SHAPE_CUBE, model, modelLocation);
+    }
+
+    // 바퀴들
+    {
+        // 왼쪽 앞 바퀴
+        {
+            glm::mat4 model(1.0f);
+
+            model = glm::translate(
+                model,
+                glm::vec3(-0.25f - 0.06f, 0.5f - 0.1f, 0.5f - 0.18f)
+            );
+
+            model = glm::rotate(
+                model,
+                glm::radians(90.0f),
+                glm::vec3(0.0f, 0.0f, 1.0f)
+            );
+
+            model = glm::scale(
+                model,
+                glm::vec3(0.5f, 0.2f, 0.5f)
+            );
+
+            glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
+            DrawObject(SHAPE_CYLINDER, model, modelLocation);
+        }
+
+        // 오른쪽 앞 바퀴
+        {
+            glm::mat4 model(1.0f);
+
+            model = glm::translate(
+                model,
+                glm::vec3(0.25f + 0.06f, 0.5f - 0.1f, 0.5f - 0.18f)
+            );
+
+            model = glm::rotate(
+                model,
+                glm::radians(90.0f),
+                glm::vec3(0.0f, 0.0f, 1.0f)
+            );
+
+            model = glm::scale(
+                model,
+                glm::vec3(0.5f, 0.2f, 0.5f)
+            );
+
+            glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
+            DrawObject(SHAPE_CYLINDER, model, modelLocation);
+        }
+
+        // 왼쪽 뒤 바퀴
+        {
+            glm::mat4 model(1.0f);
+
+            model = glm::translate(
+                model,
+                glm::vec3(-0.25f - 0.06f, 0.5f - 0.1f, -0.5f + 0.18f)
+            );
+
+            model = glm::rotate(
+                model,
+                glm::radians(90.0f),
+                glm::vec3(0.0f, 0.0f, 1.0f)
+            );
+
+            model = glm::scale(
+                model,
+                glm::vec3(0.5f, 0.2f, 0.5f)
+            );
+
+            glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
+            DrawObject(SHAPE_CYLINDER, model, modelLocation);
+        }
+
+        // 오른쪽 뒤 바퀴
+        {
+            glm::mat4 model(1.0f);
+
+            model = glm::translate(
+                model,
+                glm::vec3(0.25f + 0.06f, 0.5f - 0.1f, -0.5f + 0.18f)
+            );
+
+            model = glm::rotate(
+                model,
+                glm::radians(90.0f),
+                glm::vec3(0.0f, 0.0f, 1.0f)
+            );
+
+            model = glm::scale(
+                model,
+                glm::vec3(0.5f, 0.2f, 0.5f)
+            );
+
+            glUniform4f(colorLocation, 0.15f, 0.15f, 0.15f, 1.0f);
+            DrawObject(SHAPE_CYLINDER, model, modelLocation);
+        }
+    }
 }
 
 int main()
